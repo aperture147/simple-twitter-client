@@ -1,0 +1,23 @@
+{
+  "name": "simple-twitter-client",
+  "version": "1.0.0",
+  "description": "A simple Twitter/X V2 API client, which only utilize Web API instead of Node API",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "twitter",
+    "x",
+    "cloudflare workers"
+  ],
+  "author": "HaiVQ <me@haivq.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/web": "^0.0.201",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
