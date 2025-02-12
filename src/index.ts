@@ -1,9 +1,12 @@
-import { TwitterCredentials } from './schema'
-import { TwitterCredentialsUpdateFunction } from './type';
+import { TwitterCredentials } from './type/resp'
+import { TwitterCredentialsUpdateFunction } from './type/auth';
 import { PostClient } from './module/post';
+import { UserClient } from './module/user';
 
 export class TwitterClient {
-    private postClient: PostClient;
+    private _postClient: PostClient;
+    private _userClient: UserClient;
+    
     /**
      * Constructor of TwitterClient
      * 
@@ -20,7 +23,12 @@ export class TwitterClient {
         clientSecret?: string,
         credentialsUpdateFunction?: TwitterCredentialsUpdateFunction
     ) {
-        this.postClient = new PostClient(
+        this._postClient = new PostClient(
+            accountID, credentials,
+            clientID, clientSecret,
+            credentialsUpdateFunction
+        );
+        this._userClient = new UserClient(
             accountID, credentials,
             clientID, clientSecret,
             credentialsUpdateFunction
@@ -28,6 +36,10 @@ export class TwitterClient {
     }
     
     public get post() {
-        return this.postClient;
+        return this._postClient;
+    }
+
+    public get user() {
+        return this._userClient;
     }
 }

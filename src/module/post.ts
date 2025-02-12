@@ -1,7 +1,11 @@
 import { BaseClient } from "./_base";
-import { TwitterResponse } from "../schema";
+import { TwitterResponse } from "../type/resp";
 import { TwitterClientUserException } from "../exception";
-
+import { 
+    TweetField, Expansion, UserField,
+    MediaField, PollField, PlaceField,
+    SearchCountField, RulesCountField
+} from "../type/enum";
 export interface RuleAddObject {
     value: string,
     tag?: string,
@@ -23,17 +27,20 @@ export class PostClient extends BaseClient {
             next_token?: string,
             pagination_token?: string,
             sort_order?: string,
-            "tweet.fields"?: string[],
-            expansions?: string[],
-            "media.fields"?: string[],
-            "poll.fields"?: string[],
-            "user.fields"?: string[],
-            "place.fields"?: string[],
+            "tweet.fields"?: TweetField[],
+            expansions?: Expansion[],
+            "media.fields"?: MediaField[],
+            "poll.fields"?: PollField[],
+            "user.fields"?: UserField[],
+            "place.fields"?: PlaceField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/search/all", params);
+        const url = this.getFullURL("/tweets/search/all", {
+            query,
+            ...params
+        }, ['query']);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -52,17 +59,20 @@ export class PostClient extends BaseClient {
             next_token?: string,
             pagination_token?: string,
             sort_order?: string,
-            "tweet.fields"?: string[],
-            expansions?: string[],
-            "media.fields"?: string[],
-            "poll.fields"?: string[],
-            "user.fields"?: string[],
-            "place.fields"?: string[],
+            "tweet.fields"?: TweetField[],
+            expansions?: Expansion[],
+            "media.fields"?: MediaField[],
+            "poll.fields"?: PollField[],
+            "user.fields"?: UserField[],
+            "place.fields"?: PlaceField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/search/recent", params);
+        const url = this.getFullURL("/tweets/search/recent", {
+            query,
+            ...params
+        }, ['query']);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -83,12 +93,15 @@ export class PostClient extends BaseClient {
             next_token?: string,
             pagination_token?: string,
             granularity?: string,
-            "search_count.fields"?: string[],
+            "search_count.fields"?: SearchCountField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/counts/all", params);
+        const url = this.getFullURL("/tweets/counts/all", {
+            query,
+            ...params
+        }, ['query']);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -107,12 +120,15 @@ export class PostClient extends BaseClient {
             next_token?: string,
             pagination_token?: string,
             granularity?: string,
-            "search_count.fields"?: string[],
+            "search_count.fields"?: SearchCountField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/counts/recent", params);
+        const url = this.getFullURL("/tweets/counts/recent", {
+            query,
+            ...params
+        }, ['query']);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -126,12 +142,12 @@ export class PostClient extends BaseClient {
         backfill_minutes?: number,
         start_time?: string,
         end_time?: string,
-        "tweet.fields"?: string[],
-        expansions?: string[],
-        "media.fields"?: string[],
-        "poll.fields"?: string[],
-        "user.fields"?: string[],
-        "place.fields"?: string[],
+        "tweet.fields"?: TweetField[],
+        expansions?: Expansion[],
+        "media.fields"?: MediaField[],
+        "poll.fields"?: PollField[],
+        "user.fields"?: UserField[],
+        "place.fields"?: PlaceField[],
     }): Promise<TwitterResponse> {
         const url = this.getFullURL("/tweets/search/stream", params);
         const resp = await this.fetch(url);
@@ -148,7 +164,10 @@ export class PostClient extends BaseClient {
             pagination_token?: string,
         }
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", params, ["ids"]);
+        const url = this.getFullURL("/tweets/search/stream/rules", {
+            ids,
+            ...params
+        }, ["ids"]);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -156,7 +175,9 @@ export class PostClient extends BaseClient {
     /**
      * Returns the counts of rules from a User’s active rule set, to reflect usage by project and application.
      */
-    async rulesCount(rules_count_fields: string[]): Promise<TwitterResponse> {
+    async rulesCount(
+        rules_count_fields: RulesCountField[]
+    ): Promise<TwitterResponse> {
         const url = this.getFullURL("/tweets/search/stream/rules", { rules_count_fields });
         const resp = await this.fetch(url);
         return resp.json();
@@ -185,16 +206,22 @@ export class PostClient extends BaseClient {
      * Delete rules from a User’s active rule set.
      * Users can delete their entire rule set or a subset specified by rule ids or values.
      */
-    async deleteRules(
+    async deleteRules(options: {
         ids?: string[],
         values?: string[],
         dry_run?: boolean,
         delete_all?: boolean
-    ): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", { dry_run, delete_all });
+    }): Promise<TwitterResponse> {
+        const url = this.getFullURL("/tweets/search/stream/rules", {
+            dry_run: options.dry_run,
+            delete_all: options.delete_all
+        });
         let data = {};
-        if (!delete_all) {
-            data = { delete: { ids, values } };
+        if (!options.delete_all) {
+            if (!options.ids && !options.values)
+                throw new TwitterClientUserException('at least ids or values are required');
+
+            data = { delete: { ids: options.ids, values: options.values } };
         }
         const resp = await this.fetch(url, {
             method: 'POST',
@@ -224,10 +251,19 @@ export class PostClient extends BaseClient {
         community_id?: string,
         direct_message_deep_link?: string,
         for_super_followers_only?: boolean,
-        geo?: { place_id: string },
-        media?: { media_ids: string[], tagged_user_ids?: string[] },
+        geo?: {
+            place_id: string
+        },
+        media?: {
+            media_ids: string[],
+            tagged_user_ids?: string[]
+        },
         nullcast?: boolean,
-        poll?: { duration_minutes: number, end_datetime: string, options: string[] },
+        poll?: {
+            duration_minutes: number,
+            end_datetime: string,
+            options: string[]
+        },
     }): Promise<TwitterResponse> {
         const url = this.getFullURL("/tweets");
         const resp = await this.fetch(url, {

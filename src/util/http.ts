@@ -42,13 +42,10 @@ export function setQueryParams(
 ): void {
     // If there are no params, exit now
     if (!params) return;
-    const requiredParamsSet = new Set(requiredParams);
+    const missingParamSet = new Set(requiredParams).difference(new Set(Object.keys(params)));
+    if (missingParamSet.size)
+        throw new TwitterClientUserException(`Missing required parameter: ${[...missingParamSet].join("")}`);
     for (const [key, value] of Object.entries(params)) {
-        if (!value) {
-            if (requiredParamsSet.has(key))
-                throw new TwitterClientUserException(`Missing required parameter: ${key}`);
-            continue;
-        }
         if (Array.isArray(value)) {
             searchParams.append(key, value.join(','));
             continue;

@@ -3,7 +3,7 @@ import {
     TwitterClientAPIException
 } from '../exception';
 import { checkTwitterResponse } from './http';
-import { TwitterCredentials } from '../schema';
+import { TwitterCredentials } from '../type/resp';
 import { TWITTER_API_URL, TWITTER_OAUTH_URL } from '../constant';
 
 async function generatePKCEKeyPair(): Promise<{ verifier: string; challenge: string }> {
