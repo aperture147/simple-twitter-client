@@ -1,7 +1,8 @@
 import {
-    TwitterClientUserException,
     TwitterClientAPIException
 } from '../exception';
+
+import { checkKeyExists } from './common';
 
 /**
  * Check for the response from fetch
@@ -42,9 +43,8 @@ export function setQueryParams(
 ): void {
     // If there are no params, exit now
     if (!params) return;
-    const missingParamSet = new Set(requiredParams).difference(new Set(Object.keys(params)));
-    if (missingParamSet.size)
-        throw new TwitterClientUserException(`Missing required parameter: ${[...missingParamSet].join("")}`);
+    if (requiredParams)
+        checkKeyExists(params, requiredParams);
     for (const [key, value] of Object.entries(params)) {
         if (Array.isArray(value)) {
             searchParams.append(key, value.join(','));
