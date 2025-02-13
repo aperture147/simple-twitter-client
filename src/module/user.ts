@@ -25,63 +25,53 @@ export class UserClient extends BaseClient {
     }
 
     /******************** User Lookup API ********************/
-    async userLookupByIDs(
-        ids: string[],
+    async getUsersByIDs(
+        ids: string[] | string,
         params?: userLookupParams
     ): Promise<TwitterResponse> {
         if (!ids) {
             throw new TwitterClientUserException('ids is required');
         }
-        const url = this.getFullURL("", params);
-        const resp = await this.fetch(url);
-        return resp.json();
-    }
-
-    async userLookupByID(
-        id: string = this.accountID,
-        params?: userLookupParams
-    ): Promise<TwitterResponse> {
-        if (!id) {
-            throw new TwitterClientUserException('id is required');
+        let path = "";
+        const queryParams: Record<string, any> = {
+            ...params
         }
-        const url = this.getFullURL(`/${id}`, params);
-        const resp = await this.fetch(url);
-        return resp.json();
-    }
-
-    async userLookupMe(params?: userLookupParams): Promise<TwitterResponse> {
-        return this.userLookupByID('me', params);
-    }
-
-    async userLookupByUsername(
-        username: string,
-        params?: userLookupParams
-    ): Promise<TwitterResponse> {
-        if (!username) {
-            throw new TwitterClientUserException('username is required');
+        if (Array.isArray(ids)) {
+            queryParams["ids"] = ids;
+        } else {
+            path = `/${ids}`;
         }
-        const url = this.getFullURL(`/by/username/${username}`, params);
+        const url = this.getFullURL(path, queryParams);
         const resp = await this.fetch(url);
         return resp.json();
     }
 
-    async userLookupByUsernames(
-        usernames: string[],
+    async getCurrentUser(params?: userLookupParams): Promise<TwitterResponse> {
+        return this.getUsersByIDs('me', params);
+    }
+
+    async getUsersByUsernames(
+        usernames: string[] | string,
         params?: userLookupParams
     ): Promise<TwitterResponse> {
         if (!usernames) {
             throw new TwitterClientUserException('usernames is required');
         }
-        const url = this.getFullURL(`/by`, {
-            usernames,
+        let path = '/by';
+        const queryParams: Record<string, any> = {
             ...params
-        });
+        }
+        if (Array.isArray(usernames)) {
+            queryParams["usernames"] = usernames;
+        } else {
+            path += `/username/${usernames}`;
+        }
+        const url = this.getFullURL(path, queryParams);
         const resp = await this.fetch(url);
         return resp.json();
     }
 
     /******************** Search API ********************/
-    // TODO: Implement search API
 
     async userSearch(query: string, params: {
         max_results?: number,
@@ -96,6 +86,7 @@ export class UserClient extends BaseClient {
     }
 
     /******************** Follows API ********************/
+    
     async getFollowersByUserID(
         id: string = this.accountID,
         params: {
@@ -116,10 +107,7 @@ export class UserClient extends BaseClient {
         params?: {
             max_results?: number,
             pagination_token?: string,
-            "tweet.fields"?: string[],
-            expansions?: string[],
-            "user.fields"?: string[],
-        }
+        } & userLookupParams
     ): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
@@ -128,9 +116,7 @@ export class UserClient extends BaseClient {
         return resp.json();
     }
 
-    async followUser(
-        id: string,
-    ): Promise<TwitterResponse> {
+    async followUser(id: string): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
         const url = this.getFullURL(`/${this.accountID}/following`);
@@ -141,9 +127,7 @@ export class UserClient extends BaseClient {
         return resp.json();
     }
 
-    async unfollowUser(
-        id: string
-    ): Promise<TwitterResponse> {
+    async unfollowUser(id: string): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
@@ -155,9 +139,7 @@ export class UserClient extends BaseClient {
     }
 
     /******************** Mutes API ********************/
-    async muteUserByID(
-        id: string
-    ): Promise<TwitterResponse> {
+    async muteUserByID(id: string): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
@@ -169,9 +151,7 @@ export class UserClient extends BaseClient {
         return resp.json();
     }
 
-    async unmuteUserByID(
-        id: string
-    ): Promise<TwitterResponse> {
+    async unmuteUserByID(id: string): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
@@ -186,10 +166,7 @@ export class UserClient extends BaseClient {
         params: {
             max_results?: number,
             pagination_token?: string,
-            "tweet.fields"?: string[],
-            expansions?: string[],
-            "user.fields"?: string[],
-        }
+        } & userLookupParams
     ): Promise<TwitterResponse> {
         const url = this.getFullURL(`/${this.accountID}/muting`, params);
         const resp = await this.fetch(url);
@@ -201,10 +178,7 @@ export class UserClient extends BaseClient {
         params: {
             max_results?: number,
             pagination_token?: string,
-            "tweet.fields"?: string[],
-            expansions?: string[],
-            "user.fields"?: string[],
-        }
+        } & userLookupParams
     ): Promise<TwitterResponse> {
         const url = this.getFullURL(`/${this.accountID}/blocking`, params);
         const resp = await this.fetch(url);

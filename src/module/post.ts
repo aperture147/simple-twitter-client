@@ -5,7 +5,7 @@ import {
     TweetField, Expansion, UserField,
     MediaField, PollField, PlaceField,
     SearchCountField, RulesCountField,
-    MinuteBasedGranularity,
+    MinuteBasedGranularity, Exclude,
     ReplySetting, SortOrder
 } from "../type/enum";
 export interface RuleAddObject {
@@ -152,7 +152,7 @@ export class PostClient extends BaseClient {
     /**
      * Streams Posts matching the stream’s active rule set.
      */
-    async filteredStream(params?: {
+    async getFilteredStream(params?: {
         backfill_minutes?: number,
         start_time?: string,
         end_time?: string,
@@ -172,7 +172,7 @@ export class PostClient extends BaseClient {
      * Returns rules from a User’s active rule set.
      * Users can fetch all of their rules or a subset, specified by the provided rule ids.
      */
-    async rulesLookup(
+    async getRules(
         ids: string[],
         params: {
             max_results?: number,
@@ -190,7 +190,7 @@ export class PostClient extends BaseClient {
     /**
      * Returns the counts of rules from a User’s active rule set, to reflect usage by project and application.
      */
-    async rulesCount(
+    async getRulesCount(
         rules_count_fields: RulesCountField[]
     ): Promise<TwitterResponse> {
         const url = this.getFullURL("/search/stream/rules", { rules_count_fields });
@@ -252,7 +252,39 @@ export class PostClient extends BaseClient {
     // TODO: Implement Timelines API
 
     /******************** Post Lookup API ********************/
-    // TODO: Implement Post Lookup API
+    async getPost(body: {
+        card_uri?: string,
+        community_id?: string,
+        direct_message_deep_link?: string,
+        for_super_followers_only?: boolean,
+        geo?: {
+            place_id: string
+        },
+        media?: {
+            media_ids: string[],
+            tagged_user_ids?: string[]
+        },
+        nullcast?: boolean,
+        poll?: {
+            duration_minutes: number,
+            end_datetime: string,
+            options: string[]
+        },
+        quote_tweet_id?: string,
+        reply?: {
+            in_reply_to_tweet_id: string,
+            exclude_reply_user_ids?: string[]
+        },
+        reply_settings?: ReplySetting[],
+        text?: string,
+    }): Promise<TwitterResponse> {
+        const url = this.getFullURL();
+        const resp = await this.fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        return resp.json();
+    }
 
     /******************** Bookmarks API ********************/
     // TODO: Implement Bookmarks API
@@ -310,10 +342,38 @@ export class PostClient extends BaseClient {
     // TODO: Implement Reposts API
 
     /******************** Quotes API ********************/
-    // TODO: Implement Quotes API
+    /**
+     * Returns a variety of information about each Post that
+     * quotes the Post specified by the requested ID.
+     */
+    async getQuotePost(
+        id: string,
+        params?: {
+            max_results?: number,
+            pagination_token?: string,
+            exclude?: Exclude[],
+            "tweet.fields"?: TweetField[],
+            expansions?: Expansion[],
+            "media.fields"?: MediaField[],
+            "poll.fields"?: PollField[],
+            "user.fields"?: UserField[],
+            "place.fields"?: PlaceField[],
+        }
+    ): Promise<TwitterResponse> {
+        const url = this.getFullURL(`/${id}/quote_tweets`, params);
+        const resp = await this.fetch(url);
+        return resp.json();
+    }
 
     /******************** Hide replies API ********************/
-    // TODO: Implement Hide replies API
+    async hideReplies(id: string, hidden: boolean): Promise<TwitterResponse> {
+        const url = this.getFullURL(`/${id}/hidden`);
+        const resp = await this.fetch(url, {
+            method: 'PUT',
+            body: JSON.stringify({ hidden }),
+        });
+        return resp.json();
+    }
 
     /******************** Volume streams API ********************/
     // TODO: Implement Volume streams API

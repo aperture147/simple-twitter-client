@@ -1,14 +1,64 @@
-import { BaseClient } from "./_base";
-import { TwitterResponse } from "../type/resp";
+import { BaseClient, ClientOptions } from "./_base";
+import { TwitterResponse, TwitterCredentials } from "../type/resp";
 import { TwitterClientUserException } from "../exception";
+import { MediaCategory, UploadCommand } from "../type/enum";
+import { checkKeyExists } from "../util/common";
 import {
     detectMediaMimeExt
 } from "../util/mime";
 
 export class MediaClient extends BaseClient {
+    constructor(
+        accountID: string,
+        credentials: TwitterCredentials,
+        options?: ClientOptions
+    ) {
+        super(accountID, credentials, {
+            pathPrefix: '/media',
+            ...options
+        });
+    }
+    
     async mediaUpload(
+        params: {
+            total_bytes?: number,
+            media_type?: string,
+            command: UploadCommand,
+            media_id?: string,
+            media_category?: MediaCategory,
+            segment_index?: number,
+            additional_owners?: string[],
+        },
+        media?: Blob
+    ): Promise<TwitterResponse> {
+        const keyCheckList = ['command'];
+        if (params.command === UploadCommand.Init)
+            keyCheckList.push('total_bytes', 'media_type');
+        if (params.command === UploadCommand.Append)
+            keyCheckList.push('media_id', 'segment_index');
+        if (params.command === UploadCommand.Finalize)
+            keyCheckList.push('media_id');
+        checkKeyExists(params, keyCheckList);
+        const url = this.getFullURL('/upload', params);
+        
+        const mediaFormData = new FormData();
+        if (media)
+            mediaFormData.append('media', media);
+            
+        const resp = await this.fetch(url, {
+            method: 'POST',
+            body: mediaFormData
+        })
+
+        return resp.json();
+    }
+
+    async uploadMedia(
         mediaData: Blob,
-        category: string,
+        options?: {
+            category?: MediaCategory,
+            additionalOwners?: string[]
+        }
     ): Promise<TwitterResponse> {
         if (!mediaData)
             throw new TwitterClientUserException('mediaData is required');
@@ -16,44 +66,31 @@ export class MediaClient extends BaseClient {
         const mime = await detectMediaMimeExt(mediaData);
 
         /*--------------------- Init media ---------------------*/
-        const mediaAPIPath = "/media/upload";
-        const initMediaURL = this.getFullURL(mediaAPIPath, {
-            command: 'INIT',
+        const initData = await this.mediaUpload({
+            command: UploadCommand.Init,
             total_bytes: mediaData.size,
             media_type: mime,
-            media_category: category
+            media_category: options?.category,
+            additional_owners: options?.additionalOwners
         });
 
-        const initResp = await this.fetch(initMediaURL, {
-            method: 'POST',
-        })
-        const initData = await initResp.json();
-        const mediaID = initData.data.id
+        const mediaID: string = initData.data.id
 
         /*--------------------- Append media ---------------------*/
         // TODO: slicing the media to 5MB chunks
-        const appendMediaURL = this.getFullURL(mediaAPIPath, {
-            command: 'APPEND',
+        const appendData = await this.mediaUpload({
+            command: UploadCommand.Append,
             media_id: mediaID,
             segment_index: 0
-        });
-        const appendFormData = new FormData();
-        appendFormData.append('media', mediaData);
-        const appendResp = await this.fetch(appendMediaURL, {
-            method: 'POST',
-            body: appendFormData
-        });
+        }, mediaData);
         
         /*--------------------- Finalize media ---------------------*/
-        const finalizeMediaURL = this.getFullURL(mediaAPIPath, {
-            command: 'FINALIZE',
-            media_id: mediaID,
-        });
-        const finalizeResp = await this.fetch(finalizeMediaURL, {
-            method: 'POST',
+        const finalizedData = await this.mediaUpload({
+            command: UploadCommand.Finalize,
+            media_id: mediaID
         })
 
-        return finalizeResp.json();
+        return finalizedData;
     }
 
     async mediaUploadStatus(id: string): Promise<TwitterResponse> {
