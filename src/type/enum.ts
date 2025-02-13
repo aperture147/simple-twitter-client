@@ -1,3 +1,22 @@
+export enum EngagementField {
+    Errors = 'errors',
+    Mesurement = 'measurement',
+}
+
+export enum TrendField {
+    TrendName = 'trend_name',
+    TweetCount = 'tweet_count',
+}
+
+export enum UsageField {
+    CapResetDay = 'cap_reset_day',
+    DailyClientAppUsage = 'daily_client_app_usage',
+    DailyProjectUsage = 'daily_project_usage',
+    ProjectCap = 'project_cap',
+    ProjectID = 'project_id',
+    ProjectUsage = 'project_usage',
+}
+
 export enum UserField {
     Affiliation = 'affiliation',
     ConnectionStatus = 'connection_status',
@@ -118,4 +137,57 @@ export enum PersonalizedTrendField {
     PostCount = 'post_count',
     TrendName = 'trend_name',
     TrendingSince = 'trending_since',
+}
+
+export enum SortOrder {
+    Recency = 'recency',
+    Relevancy = 'relevancy',
+}
+
+export enum MinuteBasedGranularity {
+    Minute = 'Minute',
+    Hour = 'Hour',
+    Day = 'Day',
+}
+
+export enum DayBasedGranularity {
+    Daily = 'Daily',
+    Hourly = 'Hourly',
+    Weekly = 'Weekly',
+    Total = 'Total',
+}
+
+export enum ReplySetting {
+    Following = 'following',
+    MentionedUsers = 'mentionedUsers',
+    Subscribers = 'subscribers',
+}
+
+export enum RequestedMetric {
+    AppInstallAtempts = 'AppInstallAtempts',
+    AppOpens = 'AppOpens',
+    DetailExpands = 'DetailExpands',
+    EmailTweet = 'EmailTweet',
+    Engagements = 'Engagements',
+    Follows = 'Follows',
+    HashtagClicks = 'HashtagClicks',
+    Impressions = 'Impressions',
+    Likes = 'Likes',
+    LinkClicks = 'LinkClicks',
+    MediaEngagements = 'MediaEngagements',
+    MediaViews = 'MediaViews',
+    PermalinkClicks = 'PermalinkClicks',
+    ProfileVisits = 'ProfileVisits',
+    QuoteTweets = 'QuoteTweets',
+    Replies = 'Replies',
+    Retweets = 'Retweets',
+    UniqueVideoViews = 'UniqueVideoViews',
+    URLClicks = 'UrlClicks',
+    UserProfileClicks = 'UserProfileClicks',
+    VideoCompletions = 'VideoCompletions',
+    VideoPlayed25Percent = 'VideoPlayed25Percent',
+    VideoPlayed50Percent = 'VideoPlayed50Percent',
+    VideoPlayed75Percent = 'VideoPlayed75Percent',
+    VideoStarts = 'VideoStarts',
+    VideoViews = 'VideoViews',
 }

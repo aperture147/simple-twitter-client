@@ -3,7 +3,7 @@ import {
     SIX_MONTH_TIME
 } from '../constant';
 import { TwitterCredentials } from '../type/resp';
-import { TwitterCredentialsUpdateFunction } from '../type/auth';
+import { OnTwitterCredentialsUpdateFunction } from '../type/auth';
 import {
     TwitterClientException,
     NonRefreshableCredentialsException,
@@ -14,30 +14,43 @@ import {
     setQueryParams
 } from '../util/http';
 
+export interface ClientOptions {
+    clientID?: string,
+    clientSecret?: string,
+    apiURL?: string,
+    onCredentialsUpdateFunction?: OnTwitterCredentialsUpdateFunction
+}
+
+interface internalClientOptions extends ClientOptions {
+    pathPrefix?: string,
+}
+
 export class BaseClient {
     private _accountID: string;
     private _clientID?: string;
     private _clientSecret?: string;
     private _credentials: TwitterCredentials;
+    private _apiURL: string;
 
-    private credentialsUpdate?: TwitterCredentialsUpdateFunction;
+    private onCredentialsUpdate?: OnTwitterCredentialsUpdateFunction;
 
     constructor(
         accountID: string,
         credentials: TwitterCredentials,
-        clientID?: string,
-        clientSecret?: string,
-        credentialsUpdateFunction?: TwitterCredentialsUpdateFunction
+        options?: internalClientOptions
     ) {
-        if ((clientID?.length ?? 0) ^ (clientSecret?.length ?? 0)) {
-            throw new TwitterClientException('clientID and clientSecret must be both set or both unset');
-        }
-
         this._accountID = accountID;
-        this._clientID = clientID;
-        this._clientSecret = clientSecret;
         this._credentials = credentials;
-        this.credentialsUpdate = credentialsUpdateFunction;
+        const baseAPIURL = options?.apiURL ?? TWITTER_API_URL;
+        if (options) {
+            if ((options.clientID?.length ?? 0) ^ (options.clientSecret?.length ?? 0))
+                throw new TwitterClientException('clientID and clientSecret must be both set or both unset');
+            this._clientID = options.clientID;
+            this._clientSecret = options.clientSecret;
+            this._apiURL = baseAPIURL + (options.pathPrefix ?? '');
+        } else {
+            this._apiURL = baseAPIURL;
+        }
     }
 
     public get accountID(): string {
@@ -68,8 +81,13 @@ export class BaseClient {
             Authorization: bearerAuthorizationStr
         }
         if (!(newInit.body instanceof FormData)) {
-            // @ts-ignore
-            newInit.headers['Content-Type'] = 'application/json';
+            if (newInit.body instanceof URLSearchParams) {
+                // @ts-ignore
+                newInit.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            } else {
+                // @ts-ignore
+                newInit.headers['Content-Type'] = 'application/json';
+            }
         }
         
         const resp = await fetch(input, newInit);
@@ -126,11 +144,11 @@ export class BaseClient {
         await checkTwitterResponse(tokenResp);
         
         const credentials = await tokenResp.json() as TwitterCredentials
-        credentials.created_at = Math.floor(Date.now() / 1000) - 900;
+        credentials.created_at = Math.floor(Date.now() / 1000);
         this._credentials = credentials;
 
-        if (this.credentialsUpdate) {
-            await this.credentialsUpdate(this.accountID, credentials);
+        if (this.onCredentialsUpdate) {
+            await this.onCredentialsUpdate(this.accountID, credentials);
         }
 
         return credentials;
@@ -149,11 +167,11 @@ export class BaseClient {
     }
 
     getFullURL(
-        path: string,
+        path?: string,
         params?: Record<string, any>,
         requiredParams?: Iterable<string>
     ): URL {
-        const url = new URL(TWITTER_API_URL);
+        const url = new URL(this._apiURL);
         url.pathname += path
         setQueryParams(url.searchParams, params, requiredParams);
         return url;

@@ -1,10 +1,12 @@
-import { BaseClient } from "./_base";
-import { TwitterResponse } from "../type/resp";
+import { BaseClient, ClientOptions } from "./_base";
+import { TwitterResponse, TwitterCredentials } from "../type/resp";
 import { TwitterClientUserException } from "../exception";
 import { 
     TweetField, Expansion, UserField,
     MediaField, PollField, PlaceField,
-    SearchCountField, RulesCountField
+    SearchCountField, RulesCountField,
+    MinuteBasedGranularity,
+    ReplySetting, SortOrder
 } from "../type/enum";
 export interface RuleAddObject {
     value: string,
@@ -12,6 +14,18 @@ export interface RuleAddObject {
 }
 
 export class PostClient extends BaseClient {
+    constructor(
+        accountID: string,
+        credentials: TwitterCredentials,
+        options?: ClientOptions
+    ) {
+        super(accountID, credentials, {
+            pathPrefix: '/tweets',
+            ...options
+        });
+    }
+
+
     /******************** Post Search API ********************/
     /**
      * Returns Posts that match a search query.
@@ -26,7 +40,7 @@ export class PostClient extends BaseClient {
             max_results?: number,
             next_token?: string,
             pagination_token?: string,
-            sort_order?: string,
+            sort_order?: SortOrder,
             "tweet.fields"?: TweetField[],
             expansions?: Expansion[],
             "media.fields"?: MediaField[],
@@ -37,7 +51,7 @@ export class PostClient extends BaseClient {
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/search/all", {
+        const url = this.getFullURL("/search/all", {
             query,
             ...params
         }, ['query']);
@@ -58,7 +72,7 @@ export class PostClient extends BaseClient {
             max_results?: number,
             next_token?: string,
             pagination_token?: string,
-            sort_order?: string,
+            sort_order?: SortOrder,
             "tweet.fields"?: TweetField[],
             expansions?: Expansion[],
             "media.fields"?: MediaField[],
@@ -69,7 +83,7 @@ export class PostClient extends BaseClient {
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/search/recent", {
+        const url = this.getFullURL("/search/recent", {
             query,
             ...params
         }, ['query']);
@@ -92,13 +106,13 @@ export class PostClient extends BaseClient {
             max_results?: number,
             next_token?: string,
             pagination_token?: string,
-            granularity?: string,
+            granularity?: MinuteBasedGranularity,
             "search_count.fields"?: SearchCountField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/counts/all", {
+        const url = this.getFullURL("/counts/all", {
             query,
             ...params
         }, ['query']);
@@ -119,13 +133,13 @@ export class PostClient extends BaseClient {
             max_results?: number,
             next_token?: string,
             pagination_token?: string,
-            granularity?: string,
+            granularity?: MinuteBasedGranularity,
             "search_count.fields"?: SearchCountField[],
         }
     ): Promise<TwitterResponse> {
         if (!query)
             throw new TwitterClientUserException('query is required');
-        const url = this.getFullURL("/tweets/counts/recent", {
+        const url = this.getFullURL("/counts/recent", {
             query,
             ...params
         }, ['query']);
@@ -149,7 +163,7 @@ export class PostClient extends BaseClient {
         "user.fields"?: UserField[],
         "place.fields"?: PlaceField[],
     }): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream", params);
+        const url = this.getFullURL("/search/stream", params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -158,13 +172,14 @@ export class PostClient extends BaseClient {
      * Returns rules from a User’s active rule set.
      * Users can fetch all of their rules or a subset, specified by the provided rule ids.
      */
-    async rulesLookup(ids: string[],
+    async rulesLookup(
+        ids: string[],
         params: {
             max_results?: number,
             pagination_token?: string,
         }
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", {
+        const url = this.getFullURL("/search/stream/rules", {
             ids,
             ...params
         }, ["ids"]);
@@ -178,7 +193,7 @@ export class PostClient extends BaseClient {
     async rulesCount(
         rules_count_fields: RulesCountField[]
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", { rules_count_fields });
+        const url = this.getFullURL("/search/stream/rules", { rules_count_fields });
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -191,7 +206,7 @@ export class PostClient extends BaseClient {
         add: RuleAddObject[],
         dry_run?: boolean
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", { dry_run });
+        const url = this.getFullURL("/search/stream/rules", { dry_run });
         const resp = await this.fetch(url, {
             method: 'POST',
             headers: {
@@ -212,7 +227,7 @@ export class PostClient extends BaseClient {
         dry_run?: boolean,
         delete_all?: boolean
     }): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets/search/stream/rules", {
+        const url = this.getFullURL("/search/stream/rules", {
             dry_run: options.dry_run,
             delete_all: options.delete_all
         });
@@ -264,13 +279,17 @@ export class PostClient extends BaseClient {
             end_datetime: string,
             options: string[]
         },
+        quote_tweet_id?: string,
+        reply?: {
+            in_reply_to_tweet_id: string,
+            exclude_reply_user_ids?: string[]
+        },
+        reply_settings?: ReplySetting[],
+        text?: string,
     }): Promise<TwitterResponse> {
-        const url = this.getFullURL("/tweets");
+        const url = this.getFullURL();
         const resp = await this.fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(body),
         });
         return resp.json();
@@ -280,7 +299,7 @@ export class PostClient extends BaseClient {
      * Causes the User to delete a Post under the authorized account.
      */
     async deletePost(id: string): Promise<TwitterResponse> {
-        const url = this.getFullURL(`/tweets/${id}`);
+        const url = this.getFullURL(`/${id}`);
         const resp = await this.fetch(url, {
             method: 'DELETE',
         });

@@ -1,5 +1,5 @@
-import { BaseClient } from "./_base";
-import { TwitterResponse } from "../type/resp";
+import { BaseClient, ClientOptions } from "./_base";
+import { TwitterResponse, TwitterCredentials } from "../type/resp";
 import { TwitterClientUserException } from "../exception";
 import {
     UserField, Expansion, TweetField,
@@ -13,6 +13,17 @@ interface userLookupParams {
 }
 
 export class UserClient extends BaseClient {
+    constructor(
+        accountID: string,
+        credentials: TwitterCredentials,
+        options?: ClientOptions
+    ) {
+        super(accountID, credentials, {
+            pathPrefix: '/users',
+            ...options
+        });
+    }
+
     /******************** User Lookup API ********************/
     async userLookupByIDs(
         ids: string[],
@@ -21,7 +32,7 @@ export class UserClient extends BaseClient {
         if (!ids) {
             throw new TwitterClientUserException('ids is required');
         }
-        const url = this.getFullURL("/users", params);
+        const url = this.getFullURL("", params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -33,7 +44,7 @@ export class UserClient extends BaseClient {
         if (!id) {
             throw new TwitterClientUserException('id is required');
         }
-        const url = this.getFullURL(`/users/${id}`, params);
+        const url = this.getFullURL(`/${id}`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -49,7 +60,7 @@ export class UserClient extends BaseClient {
         if (!username) {
             throw new TwitterClientUserException('username is required');
         }
-        const url = this.getFullURL(`/users/by/username/${username}`, params);
+        const url = this.getFullURL(`/by/username/${username}`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -61,7 +72,7 @@ export class UserClient extends BaseClient {
         if (!usernames) {
             throw new TwitterClientUserException('usernames is required');
         }
-        const url = this.getFullURL(`/users/by`, {
+        const url = this.getFullURL(`/by`, {
             usernames,
             ...params
         });
@@ -76,7 +87,7 @@ export class UserClient extends BaseClient {
         max_results?: number,
         next_token?: string,
     } & userLookupParams): Promise<TwitterResponse> {
-        const url = this.getFullURL("/users/search", {
+        const url = this.getFullURL("/search", {
             query,
             ...params
         }, ['query']);
@@ -95,7 +106,7 @@ export class UserClient extends BaseClient {
         if (!id) {
             throw new TwitterClientUserException('id is required');
         }
-        const url = this.getFullURL(`/users/${id}/followers`, params);
+        const url = this.getFullURL(`/${id}/followers`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -112,7 +123,7 @@ export class UserClient extends BaseClient {
     ): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
-        const url = this.getFullURL(`/users/${id}/following`, params);
+        const url = this.getFullURL(`/${id}/following`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -122,7 +133,7 @@ export class UserClient extends BaseClient {
     ): Promise<TwitterResponse> {
         if (!id)
             throw new TwitterClientUserException('id is required');
-        const url = this.getFullURL(`/users/${this.accountID}/following`);
+        const url = this.getFullURL(`/${this.accountID}/following`);
         const resp = await this.fetch(url, {
             method: 'POST',
             body: JSON.stringify({ target_user_id: id }),
@@ -136,7 +147,7 @@ export class UserClient extends BaseClient {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
-        const url = this.getFullURL(`/users/${this.accountID}/following/${id}`);
+        const url = this.getFullURL(`/${this.accountID}/following/${id}`);
         const resp = await this.fetch(url, {
             method: 'DELETE',
         });
@@ -150,7 +161,7 @@ export class UserClient extends BaseClient {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
-        const url = this.getFullURL(`/users/${this.accountID}/muting`);
+        const url = this.getFullURL(`/${this.accountID}/muting`);
         const resp = await this.fetch(url, {
             method: 'POST',
             body: JSON.stringify({ target_user_id: id }),
@@ -164,7 +175,7 @@ export class UserClient extends BaseClient {
         if (!id)
             throw new TwitterClientUserException('id is required');
 
-        const url = this.getFullURL(`/users/${this.accountID}/muting/${id}`);
+        const url = this.getFullURL(`/${this.accountID}/muting/${id}`);
         const resp = await this.fetch(url, {
             method: 'DELETE',
         });
@@ -180,7 +191,7 @@ export class UserClient extends BaseClient {
             "user.fields"?: string[],
         }
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL(`/users/${this.accountID}/muting`, params);
+        const url = this.getFullURL(`/${this.accountID}/muting`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -195,7 +206,7 @@ export class UserClient extends BaseClient {
             "user.fields"?: string[],
         }
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL(`/users/${this.accountID}/blocking`, params);
+        const url = this.getFullURL(`/${this.accountID}/blocking`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }
@@ -206,7 +217,7 @@ export class UserClient extends BaseClient {
             "personalized_trend.fields"?: PersonalizedTrendField[],
         }
     ): Promise<TwitterResponse> {
-        const url = this.getFullURL(`/users/personalized_trends`, params);
+        const url = this.getFullURL(`/personalized_trends`, params);
         const resp = await this.fetch(url);
         return resp.json();
     }

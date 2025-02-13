@@ -1,5 +1,5 @@
 import { TwitterCredentials } from './resp';
-export type TwitterCredentialsUpdateFunction = (
+export type OnTwitterCredentialsUpdateFunction = (
     accountID: string,
     credentials: TwitterCredentials
 ) => Promise<void>
