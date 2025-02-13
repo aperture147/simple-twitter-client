@@ -191,3 +191,25 @@ export enum RequestedMetric {
     VideoStarts = 'VideoStarts',
     VideoViews = 'VideoViews',
 }
+
+export enum Exclude {
+    Replies = 'replies',
+    Retweets = 'retweets',
+}
+
+export enum MediaCategory {
+    AmplifyVideo = 'amplify_video',
+    TweetGIF = 'tweet_gif',
+    TweetImage = 'tweet_image',
+    TweetVideo = 'tweet_video',
+    DMVideo = 'dm_video',
+    DMImage = 'dm_image',
+    Subtitles = 'subtitles',
+}
+
+export enum UploadCommand {
+    Init = 'INIT',
+    Finalize = 'FINALIZE',
+    Append  = 'APPEND',
+    status = 'STATUS',
+}
