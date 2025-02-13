@@ -2,7 +2,7 @@ import { TwitterCredentials } from './type/resp'
 import { OnTwitterCredentialsUpdateFunction } from './type/auth';
 import { PostClient } from './module/post';
 import { UserClient } from './module/user';
-import { EngagementClient } from './module/engagement';
+import { EngagementMetricsClient } from './module/engagement_metrics';
 import { MediaClient } from './module/media';
 import { UsageClient } from './module/usage';
 import { TrendClient } from './module/trend';
@@ -10,7 +10,7 @@ import { TrendClient } from './module/trend';
 export class TwitterClient {
     private _postClient: PostClient;
     private _userClient: UserClient;
-    private _engagementClient: EngagementClient;
+    private _engagementMetricsClient: EngagementMetricsClient;
     private _mediaClient: MediaClient;
     private _usageClient: UsageClient;
     private _trendClient: TrendClient;
@@ -44,7 +44,7 @@ export class TwitterClient {
             accountID, credentials,
             commonOptions
         );
-        this._engagementClient = new EngagementClient(
+        this._engagementMetricsClient = new EngagementMetricsClient(
             accountID, credentials,
             commonOptions
         );
@@ -70,8 +70,8 @@ export class TwitterClient {
         return this._userClient;
     }
 
-    public get engagement() {
-        return this._engagementClient;
+    public get engagementMetrics() {
+        return this._engagementMetricsClient;
     }
 
     public get media() {

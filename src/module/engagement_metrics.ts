@@ -8,7 +8,7 @@ export interface RuleAddObject {
     tag?: string,
 }
 
-export class EngagementClient extends BaseClient {
+export class EngagementMetricsClient extends BaseClient {
     constructor(
         accountID: string,
         credentials: TwitterCredentials,
