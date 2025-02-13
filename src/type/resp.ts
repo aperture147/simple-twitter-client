@@ -44,9 +44,9 @@ export interface TwitterErrorResponse {
  */
 export interface TwitterResponse {
     // TODO: research more about the Twitter API response
-    data?: object,
+    data?: any,
     errors?: TwitterErrorResponse[],
-    includes?: object,
-    meta?: object,
+    includes?: any,
+    meta?: any,
     matching_rules?: object[]
 }
